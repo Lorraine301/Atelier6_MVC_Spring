@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Absences</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        body {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 50%, #fecaca 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Navigation moderne */
+        nav {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+
+        nav a {
+            color: #4b5563;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            margin: 0 0.25rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        nav a:hover {
+            background: var(--danger-gradient);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* En-tête principal */
+        .page-header {
+            background: var(--danger-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Carte de filtre */
+        .filter-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #ef4444;
+        }
+
+        .filter-card h5 {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        .filter-input {
+            border: 2px solid #fee2e2;
+            border-radius: 10px;
+            padding: 0.75rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .filter-input:focus {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+            outline: none;
+        }
+
+        .btn-filter {
+            background: var(--danger-gradient);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
+        }
+
+        .btn-reset {
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            color: #374151;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-reset:hover {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        /* Bouton ajouter */
+        .btn-add {
+            background: var(--success-gradient);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+            color: white;
+        }
+
+        /* Sections par date */
+        .date-section {
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .date-header {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            color: #991b1b;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(239, 68, 68, 0.2);
+        }
+
+        .date-header i {
+            font-size: 1.5rem;
+        }
+
+        /* Table moderne */
+        .modern-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .modern-table thead {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+        }
+
+        .modern-table thead th {
+            padding: 1rem;
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .modern-table tbody tr {
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #fee2e2;
+        }
+
+        .modern-table tbody tr:hover {
+            background: #fef2f2;
+            transform: translateX(5px);
+        }
+
+        .modern-table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        /* Badges de justification */
+        .justification-badge {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: inline-block;
+        }
+
+        /* Boutons d'action */
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: none;
+            transition: all 0.3s ease;
+            margin: 0 0.25rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-edit {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+            color: white;
+        }
+
+        .btn-delete {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+            color: white;
+        }
+
+        /* Info étudiant */
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .student-info i {
+            color: #ef4444;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filter-form {
+                flex-direction: column;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            nav a {
+                display: block;
+                margin: 0.25rem 0;
+            }
+
+            .action-btn {
+                display: block;
+                margin: 0.25rem 0;
+                width: 100%;
+            }
+        }
+
+        .main-container {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+<nav class="container-fluid">
+    <div class="container">
+        <a th:href="@{/etudiants}"><i class="fas fa-users"></i> Liste des étudiants</a>
+        <a th:href="@{/absences}"><i class="fas fa-calendar-times"></i> Liste des absences</a>
+        <a th:href="@{/absences/stats}"><i class="fas fa-chart-bar"></i> Statistiques</a>
+    </div>
+</nav>
+
+<div class="container main-container">
+    <div class="page-header">
+        <h2><i class="fas fa-calendar-times"></i> Gestion des Absences</h2>
+        <a href="/absences/add" class="btn-add">
+            <i class="fas fa-plus-circle"></i> Ajouter une absence
+        </a>
+    </div>
+
+    <!-- Carte de filtre -->
+    <div class="filter-card">
+        <h5><i class="fas fa-filter"></i> Filtrer les absences</h5>
+        <form method="get" action="/absences" class="filter-form">
+            <div class="filter-group">
+                <label for="date"><i class="fas fa-calendar"></i> Date</label>
+                <input type="date"
+                       id="date"
+                       name="date"
+                       th:value="${filterDate}"
+                       class="filter-input">
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-search"></i> Filtrer
+                </button>
+                <a href="/absences" class="btn-reset">
+                    <i class="fas fa-redo"></i> Réinitialiser
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des absences groupées par date -->
+    <th:block th:each="entry : ${absencesGroupByDate}">
+        <div class="date-section">
+            <div class="date-header">
+                <i class="fas fa-calendar-day"></i>
+                <span th:text="${#temporals.format(entry.key, 'dd/MM/yyyy')}">Date</span>
+                <span style="margin-left: auto; background: rgba(255,255,255,0.3); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
+                    <span th:text="${#lists.size(entry.value)}">0</span> absence(s)
+                </span>
+            </div>
+
+            <table class="modern-table">
+                <thead>
+                <tr>
+                    <th><i class="fas fa-comment-alt"></i> Justification</th>
+                    <th><i class="fas fa-user-graduate"></i> Étudiant</th>
+                    <th><i class="fas fa-cog"></i> Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="a : ${entry.value}">
+                    <td>
+                        <span class="justification-badge" th:text="${a.justification}">Justification</span>
+                    </td>
+                    <td>
+                        <div class="student-info">
+                            <i class="fas fa-user"></i>
+                            <span th:text="${a.etudiant.nom + ' ' + a.etudiant.prenom}">Nom Prénom</span>
+                        </div>
+                    </td>
+                    <td>
+                        <a th:href="@{'/absences/edit/' + ${a.id}}" class="action-btn btn-edit">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a th:href="@{'/absences/delete/' + ${a.id}}"
+                           class="action-btn btn-delete"
+                           onclick="return confirm('Voulez-vous vraiment supprimer cette absence ?');">
+                            <i class="fas fa-trash-alt"></i> Supprimer
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </th:block>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

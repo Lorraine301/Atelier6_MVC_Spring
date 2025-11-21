@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistiques des absences</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --chart-gradient: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    }
+
+    body {
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 50%, #c4b5fd 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Navigation moderne */
+    nav {
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 1rem 0;
+      margin-bottom: 2rem;
+    }
+
+    nav a {
+      color: #4b5563;
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      margin: 0 0.25rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    nav a:hover {
+      background: var(--primary-gradient);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    /* Container principal */
+    .stats-container {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* En-tête de la page */
+    .page-header {
+      background: var(--primary-gradient);
+      color: white;
+      padding: 2.5rem;
+      border-radius: 20px;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+      50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+    }
+
+    .page-header h2 {
+      margin: 0;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: relative;
+      z-index: 1;
+      font-size: 2rem;
+    }
+
+    .page-header p {
+      margin: 0.75rem 0 0 0;
+      opacity: 0.95;
+      font-size: 1.05rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Cartes de statistiques */
+    .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--primary-gradient);
+    }
+
+    .stat-card-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .stat-card-label {
+      font-size: 0.9rem;
+      color: #6b7280;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    /* Carte du graphique */
+    .chart-card {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .chart-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .chart-title i {
+      color: #667eea;
+    }
+
+    .chart-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .chart-btn {
+      background: #f3f4f6;
+      border: 2px solid #e5e7eb;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      color: #374151;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .chart-btn:hover {
+      background: var(--primary-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    .chart-btn.active {
+      background: var(--primary-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    /* Zone du canvas */
+    .chart-wrapper {
+      position: relative;
+      height: 400px;
+      padding: 1rem;
+      background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+      border-radius: 15px;
+    }
+
+    /* Légende personnalisée */
+    .custom-legend {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #faf5ff;
+      border-radius: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: #4b5563;
+      font-weight: 500;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* Info box */
+    .info-box {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-left: 4px solid #3b82f6;
+      padding: 1.25rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .info-box i {
+      color: #1e40af;
+      font-size: 1.5rem;
+      margin-top: 0.2rem;
+    }
+
+    .info-box p {
+      margin: 0;
+      color: #1e3a8a;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* Boutons d'action */
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .btn-action {
+      background: white;
+      border: 2px solid #e5e7eb;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      color: #374151;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-action:hover {
+      background: var(--primary-gradient);
+      color: white;
+      border-color: transparent;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      nav a {
+        display: block;
+        margin: 0.25rem 0;
+      }
+
+      .page-header h2 {
+        font-size: 1.5rem;
+      }
+
+      .chart-wrapper {
+        height: 300px;
+      }
+
+      .stats-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<nav class="container-fluid">
+  <div class="container">
+    <a th:href="@{/etudiants}"><i class="fas fa-users"></i> Liste des étudiants</a>
+    <a th:href="@{/absences}"><i class="fas fa-calendar-times"></i> Liste des absences</a>
+    <a th:href="@{/absences/stats}"><i class="fas fa-chart-bar"></i> Statistiques</a>
+  </div>
+</nav>
+
+<div class="container stats-container">
+  <div class="page-header">
+    <h2><i class="fas fa-chart-line"></i> Tableau de Bord des Absences</h2>
+    <p>Analyse détaillée des absences par étudiant</p>
+  </div>
+
+  <div class="info-box">
+    <i class="fas fa-info-circle"></i>
+    <p>Ce tableau de bord présente une vue d'ensemble des absences enregistrées. Utilisez le graphique pour identifier rapidement les étudiants nécessitant un suivi particulier.</p>
+  </div>
+
+  <!-- Cartes de statistiques rapides -->
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="stat-card-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="stat-card-label">Total Étudiants</div>
+      <div class="stat-card-value" id="totalStudents">-</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-icon">
+        <i class="fas fa-calendar-times"></i>
+      </div>
+      <div class="stat-card-label">Total Absences</div>
+      <div class="stat-card-value" id="totalAbsences">-</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="stat-card-label">Moyenne par Étudiant</div>
+      <div class="stat-card-value" id="avgAbsences">-</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="stat-card-label">Plus d'Absences</div>
+      <div class="stat-card-value" id="maxAbsences">-</div>
+    </div>
+  </div>
+
+  <!-- Boutons d'action -->
+  <div class="action-buttons">
+    <a th:href="@{/absences}" class="btn-action">
+      <i class="fas fa-list"></i> Voir toutes les absences
+    </a>
+    <a th:href="@{/absences/add}" class="btn-action">
+      <i class="fas fa-plus-circle"></i> Ajouter une absence
+    </a>
+    <a th:href="@{/etudiants}" class="btn-action">
+      <i class="fas fa-user-graduate"></i> Gérer les étudiants
+    </a>
+  </div>
+
+  <!-- Carte du graphique -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-title">
+        <i class="fas fa-bar-chart"></i>
+        Nombre d'absences par étudiant
+      </div>
+      <div class="chart-controls">
+        <button class="chart-btn active" onclick="changeChartType('bar')">
+          <i class="fas fa-chart-bar"></i> Barres
+        </button>
+        <button class="chart-btn" onclick="changeChartType('line')">
+          <i class="fas fa-chart-line"></i> Lignes
+        </button>
+        <button class="chart-btn" onclick="changeChartType('pie')">
+          <i class="fas fa-chart-pie"></i> Camembert
+        </button>
+      </div>
+    </div>
+
+    <div class="chart-wrapper">
+      <canvas id="absenceChart"></canvas>
+    </div>
+
+    <div class="custom-legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+        <span>Nombre d'absences</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  let labels = /*[[${absenceCountByStudentKeys}]]*/ [];
+  let data = /*[[${absenceCountByStudentValues}]]*/ [];
+
+  // Calcul des statistiques
+  const totalStudents = labels.length;
+  const totalAbsences = data.reduce((a, b) => a + b, 0);
+  const avgAbsences = totalStudents > 0 ? (totalAbsences / totalStudents).toFixed(1) : 0;
+  const maxAbsences = Math.max(...data);
+
+  // Mise à jour des cartes de statistiques
+  document.getElementById('totalStudents').textContent = totalStudents;
+  document.getElementById('totalAbsences').textContent = totalAbsences;
+  document.getElementById('avgAbsences').textContent = avgAbsences;
+  document.getElementById('maxAbsences').textContent = maxAbsences;
+
+  // Configuration du graphique
+  const ctx = document.getElementById('absenceChart').getContext('2d');
+
+  // Gradient pour les barres
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, 'rgba(102, 126, 234, 0.8)');
+  gradient.addColorStop(1, 'rgba(118, 75, 162, 0.8)');
+
+  let chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Nombre d'absences",
+        data: data,
+        backgroundColor: gradient,
+        borderColor: 'rgba(102, 126, 234, 1)',
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 12,
+          borderColor: 'rgba(102, 126, 234, 1)',
+          borderWidth: 2,
+          titleFont: {
+            size: 14,
+            weight: 'bold'
+          },
+          bodyFont: {
+            size: 13
+          },
+          callbacks: {
+            label: function(context) {
+              return 'Absences: ' + context.parsed.y;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+            font: {
+              size: 12,
+              weight: '500'
+            },
+            color: '#6b7280'
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)',
+            drawBorder: false
+          }
+        },
+        x: {
+          ticks: {
+            font: {
+              size: 12,
+              weight: '500'
+            },
+            color: '#6b7280'
+          },
+          grid: {
+            display: false,
+            drawBorder: false
+          }
+        }
+      },
+      animation: {
+        duration: 1500,
+        easing: 'easeInOutQuart'
+      }
+    }
+  });
+
+  // Fonction pour changer le type de graphique
+  function changeChartType(type) {
+    // Mise à jour des boutons actifs
+    document.querySelectorAll('.chart-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    event.target.closest('.chart-btn').classList.add('active');
+
+    // Destruction et recréation du graphique
+    chart.destroy();
+
+    const config = {
+      type: type,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Nombre d'absences",
+          data: data,
+          backgroundColor: type === 'pie' ? generateColors(data.length) : gradient,
+          borderColor: 'rgba(102, 126, 234, 1)',
+          borderWidth: 2,
+          borderRadius: type === 'bar' ? 8 : 0,
+          tension: 0.4,
+          fill: type === 'line' ? true : false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: type === 'pie',
+            position: 'right',
+            labels: {
+              font: {
+                size: 12
+              },
+              padding: 15
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 12,
+            borderColor: 'rgba(102, 126, 234, 1)',
+            borderWidth: 2
+          }
+        },
+        scales: type !== 'pie' ? {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0,
+              font: { size: 12, weight: '500' },
+              color: '#6b7280'
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)',
+              drawBorder: false
+            }
+          },
+          x: {
+            ticks: {
+              font: { size: 12, weight: '500' },
+              color: '#6b7280'
+            },
+            grid: {
+              display: false,
+              drawBorder: false
+            }
+          }
+        } : {},
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuart'
+        }
+      }
+    };
+
+    chart = new Chart(ctx, config);
+  }
+
+  // Fonction pour générer des couleurs pour le camembert
+  function generateColors(count) {
+    const colors = [];
+    const baseHue = 250;
+    for (let i = 0; i < count; i++) {
+      const hue = (baseHue + (i * 360 / count)) % 360;
+      colors.push(`hsla(${hue}, 70%, 60%, 0.8)`);
+    }
+    return colors;
+  }
+  /*]]>*/
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

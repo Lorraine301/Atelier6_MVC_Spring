@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un étudiant</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-color: #10b981;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            padding: 2rem 0;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 3rem;
+            max-width: 600px;
+            margin: 0 auto;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin: -3rem -3rem 2rem -3rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-header h2 {
+            margin: 0;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .form-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .input-icon {
+            position: relative;
+        }
+
+        .input-icon i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+
+        .input-icon .form-control {
+            padding-left: 2.75rem;
+        }
+
+        .btn-submit {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            font-size: 1.05rem;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-back {
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            color: #374151;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+
+        .btn-back:hover {
+            background: #e5e7eb;
+            color: #1f2937;
+            transform: translateX(-5px);
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Animation pour les champs */
+        .form-group {
+            animation: fadeIn 0.6s ease-out backwards;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.1s; }
+        .form-group:nth-child(2) { animation-delay: 0.2s; }
+        .form-group:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 2rem 1.5rem;
+            }
+
+            .form-header {
+                margin: -2rem -1.5rem 1.5rem -1.5rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="form-container">
+        <div class="form-header">
+            <h2><i class="fas fa-user-plus"></i> Ajouter un étudiant</h2>
+            <p>Remplissez les informations ci-dessous</p>
+        </div>
+
+        <form th:action="@{/etudiants/save}" th:object="${etudiant}" method="post">
+
+            <div class="form-group">
+                <label for="nom" class="form-label">
+                    <i class="fas fa-user"></i> Nom
+                </label>
+                <div class="input-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text"
+                           id="nom"
+                           th:field="*{nom}"
+                           class="form-control"
+                           placeholder="Entrez le nom"
+                           required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="prenom" class="form-label">
+                    <i class="fas fa-user-tag"></i> Prénom
+                </label>
+                <div class="input-icon">
+                    <i class="fas fa-user-tag"></i>
+                    <input type="text"
+                           id="prenom"
+                           th:field="*{prenom}"
+                           class="form-control"
+                           placeholder="Entrez le prénom"
+                           required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">
+                    <i class="fas fa-envelope"></i> Email
+                </label>
+                <div class="input-icon">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email"
+                           id="email"
+                           th:field="*{email}"
+                           class="form-control"
+                           placeholder="exemple@email.com"
+                           required />
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="telephone" class="form-label">
+                    <i class="fas fa-phone"></i> Téléphone
+                </label>
+                <div class="input-icon">
+                    <i class="fas fa-phone"></i>
+                    <input type="text"
+                           id="telephone"
+                           th:field="*{telephone}"
+                           class="form-control"
+                           placeholder="Entrez le numéro de téléphone"
+                           required />
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-submit">
+                    <i class="fas fa-save"></i> Enregistrer l'étudiant
+                </button>
+                <a th:href="@{/etudiants}" class="btn-back text-center">
+                    <i class="fas fa-arrow-left"></i> Revenir à la liste
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
